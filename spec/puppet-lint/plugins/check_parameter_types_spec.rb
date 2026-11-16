@@ -152,5 +152,20 @@ describe 'parameter_types' do
         expect(problems).to have(0).problem
       end
     end
+
+    context "#{rt} with a lambda in a default value" do
+      let(:code) do
+        <<~EOL
+          class spec (
+            Hash $attr1 = $facts['foo'].filter |$key, $value| { $value != undef },
+            String $attr2 = 'foo',
+          ) { }
+        EOL
+      end
+
+      it 'is not a problem' do
+        expect(problems).to have(0).problem
+      end
+    end
   end
 end

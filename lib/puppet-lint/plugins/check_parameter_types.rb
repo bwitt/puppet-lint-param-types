@@ -10,6 +10,7 @@ PuppetLint.new_check(:parameter_types) do
       state = :ST_BEGIN
       paren_stack = []
       data_stack = []
+      in_lambda_params = false
       idx[:param_tokens].each do |token|
         next if %i[NEWLINE WHITESPACE INDENT COMMENT MLCOMMENT SLASH_COMMENT].include?(token.type)
 
@@ -17,6 +18,7 @@ PuppetLint.new_check(:parameter_types) do
         when :ST_BEGIN
           paren_stack = []
           data_stack = []
+          in_lambda_params = false
           if (token.type == :TYPE) or (token.value =~ /^[A-Z]/)
             state = :ST_SKIP_TYPE
           elsif token.type == :VARIABLE
@@ -38,7 +40,10 @@ PuppetLint.new_check(:parameter_types) do
             data_stack.push(true)
           elsif token.type == :RBRACE || token.type == :RBRACK
             data_stack.pop
-          elsif token.type == :COMMA && data_stack.empty? && paren_stack.empty?
+          # lambda parameters are separated by commas too
+          elsif token.type == :PIPE
+            in_lambda_params = !in_lambda_params
+          elsif token.type == :COMMA && data_stack.empty? && paren_stack.empty? && !in_lambda_params
             state = :ST_BEGIN
           end
         # Datatypes cannot have variables so when a variable is found it must be
